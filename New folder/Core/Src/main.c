@@ -47,8 +47,12 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 
-uint16_t ADCFeedBack = 0; // Store ADC Value
-float P = 0; // input value after mapping from 0-4095 to 0-360
+uint16_t ADCFeedBack = 0; 	// Store ADC Value
+float P = 0; 				// input value after mapping from 0-4095 to 0-360
+float Plast = 0;			// For Unwrapping
+float Polast = 0;			// For Unwrapping
+float P_unwrap;
+float Po = 0;
 
 /* USER CODE END PV */
 
@@ -59,7 +63,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
-
+float Unwrapping(float InputP);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -329,8 +333,27 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) // 50 Hz sampling time
 {
 	ADCFeedBack = HAL_ADC_GetValue(&hadc1); // get ADC value every 0.02 s
 	P = (ADCFeedBack * 360.0) / 4095.0; // mapping value 0-4095 to 0-360
+	P_unwrap = Unwrapping(P);
 }
 
+float Unwrapping(float InputP)
+{
+	static float Pmax = 360;
+	static float threshold = 180;
+
+	if (InputP - Plast <= -threshold){
+		Po = Polast + Pmax;
+	}
+	else if (InputP - Plast >= threshold){
+		Po = Polast - Pmax;
+	}
+	else {
+		Po = Polast;
+	}
+	Plast = InputP;		// P feedback
+	Polast = Po;		// Po feedback
+	return InputP + Po;
+}
 
 
 /* USER CODE END 4 */
