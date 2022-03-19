@@ -48,6 +48,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 
 uint16_t ADCFeedBack = 0; // Store ADC Value
+float P = 0; // input value after mapping from 0-4095 to 0-360
 
 /* USER CODE END PV */
 
@@ -98,6 +99,11 @@ int main(void)
   MX_ADC1_Init();
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
+
+  // ADC and Timer 3 That Call Back
+  HAL_ADC_Start_IT(&hadc1); 		//Start ADC with interrupt Callback
+  HAL_TIM_Base_Start(&htim3);		//Start Timer 3
+  // When timer 3 count will call ADC interrupt due to setting
 
   /* USER CODE END 2 */
 
@@ -318,6 +324,14 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) // 50 Hz sampling time
+{
+	ADCFeedBack = HAL_ADC_GetValue(&hadc1); // get ADC value every 0.02 s
+	P = (ADCFeedBack * 360.0) / 4095.0; // mapping value 0-4095 to 0-360
+}
+
+
 
 /* USER CODE END 4 */
 
